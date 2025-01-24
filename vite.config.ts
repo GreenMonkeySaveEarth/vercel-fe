@@ -14,6 +14,7 @@ export default defineConfig({
     alias: {
       '@/app': '/src/app',
       '@/assets': '/src/assets',
+      '@/context': '/src/context',
       '@/components': '/src/components',
       '@/features': '/src/features',
       '@/hooks': '/src/hooks',
