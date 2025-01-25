@@ -1,57 +1,83 @@
 import React from 'react';
-import TemplateTester from '@/components/TemplateTester/TemplateTester';
 import { Typography, Stack, Container, CircularProgress, Alert, TextField } from '@mui/material';
-import Counter from '@/components/Counter/Counter';
 import { useSearchContext } from '@/context/SearchContext';
 
 const Home = () => {
-  const { query, setQuery, data, loading, error } = useSearchContext();
+  const { query, setQuery, suggestions, selectedIndex, setSuggestions, setSelectedIndex, loading, error
+  } = useSearchContext();
 
-  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setQuery(event.target.value);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setQuery(e.target.value);
+    setSelectedIndex(-1); // Reset keyboard selection
   };
 
-  console.log('data from', data);
+  // Handle keyboard navigation and selection
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "ArrowDown") {
+      setSelectedIndex((prev: number): number => Math.min(prev + 1, suggestions.length - 1));
+    } else if (e.key === "ArrowUp") {
+      setSelectedIndex((prev: number): number => Math.max(prev - 1, 0));
+    } else if (e.key === "Enter" && selectedIndex >= 0) {
+      handleSelection(suggestions[selectedIndex]);
+    }
+  };
+
+  // Handle suggestion selection
+  const handleSelection = (value: string) => {
+    setQuery(value); // Set input value to the selected suggestion
+    setSuggestions([]); // Clear suggestions
+    console.log("Selected:", value);
+  };
 
   return (
-    <Container sx={{ py: 2, position: 'relative' }}>
+    <Container maxWidth="sm" style={{ marginTop: "50px", textAlign: "center" }}>
       <TextField
         fullWidth
         variant="outlined"
-        placeholder="Search..."
         value={query}
         onChange={handleInputChange}
-        sx={{ my: 2 }}
+        onKeyDown={handleKeyDown}
+        placeholder="Type to search..."
+        InputProps={{
+          style: {
+            padding: "10px",
+            fontSize: "16px",
+          },
+        }}
       />
-      {/* We are going to add the dropdown selection from the result */}
-      {data && data.length > 0 && (
+      {loading && <CircularProgress style={{ marginTop: "10px" }} />}
+      {suggestions.length > 0 && (
         <Stack
-          sx={{
-            position: 'absolute',
-            top: '100%',
-            left: 0,
-            right: 0,
-            bgcolor: 'background.paper',
-            boxShadow: 1,
-            zIndex: 1,
-            maxHeight: 200,
-            overflowY: 'auto',
-            width: '100%', // Make the dropdown the same width as the input box
+          component="ul"
+          spacing={1}
+          style={{
+            listStyle: "none",
+            margin: "0",
+            padding: "0",
+            border: "1px solid #ccc",
+            borderRadius: "4px",
+            marginTop: "5px",
+            background: "#fff",
+            zIndex: 10,
           }}
         >
-          {data.map((item: any, index: number) => (
+          {suggestions.map((item, index) => (
             <Typography
-              key={index}
-              sx={{ p: 2, cursor: 'pointer' }}
-              onClick={() => setQuery(item)}
+              component="li"
+              key={item}
+              onMouseDown={() => handleSelection(item)} // Mouse down to prevent blur event
+              style={{
+                padding: "10px",
+                background: index === selectedIndex ? "#f0f0f0" : "#fff",
+                cursor: "pointer",
+              }}
             >
               {item}
             </Typography>
           ))}
         </Stack>
       )}
-      {loading && <CircularProgress />}
-      {error && <Alert severity="error">{error}</Alert>}
+      {error && <Alert severity="error" style={{ marginTop: "10px" }}>{error}</Alert>}
     </Container>
   );
 };
